@@ -27,7 +27,7 @@ if database_url and database_name:
 
 # Helper functions for common database operations
 def create_document(collection_name: str, data: Union[BaseModel, dict]):
-    """Insert a single document with timestamp"""
+    """Insert a single document with timestamps and mirror string id"""
     if db is None:
         raise Exception("Database not available. Check DATABASE_URL and DATABASE_NAME environment variables.")
 
@@ -37,11 +37,15 @@ def create_document(collection_name: str, data: Union[BaseModel, dict]):
     else:
         data_dict = data.copy()
 
-    data_dict['created_at'] = datetime.now(timezone.utc)
-    data_dict['updated_at'] = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc)
+    data_dict['created_at'] = now
+    data_dict['updated_at'] = now
 
     result = db[collection_name].insert_one(data_dict)
-    return str(result.inserted_id)
+    # Mirror string id for easy lookups without ObjectId parsing
+    str_id = str(result.inserted_id)
+    db[collection_name].update_one({"_id": result.inserted_id}, {"$set": {"id": str_id}})
+    return str_id
 
 def get_documents(collection_name: str, filter_dict: dict = None, limit: int = None):
     """Get documents from collection"""
