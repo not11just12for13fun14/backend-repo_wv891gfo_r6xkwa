@@ -20,15 +20,17 @@ DATABASE_NAME = os.getenv("DATABASE_NAME", "allassist")
 FCM_SERVER_KEY = os.getenv("FCM_SERVER_KEY", "")
 
 # Auth helpers
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Use PBKDF2 to avoid bcrypt backend issues in some environments
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 security = HTTPBearer()
 
-app = FastAPI(title="All Assist API", version="1.1.0")
+app = FastAPI(title="All Assist API", version="1.1.1")
 
+# CORS: Return permissive headers without credentials to avoid browser blocks
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
